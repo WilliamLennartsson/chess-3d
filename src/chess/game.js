@@ -2,7 +2,6 @@ import * as THREE from '../dependencies/three.module.js'
 
 import Board from './board'
 
-import Player from './componentSystem/components/player'
 import Piece from './componentSystem/components/Piece'
 import Grid from './componentSystem/components/grid.js'
 import GameLogic from './componentSystem/components/gameLogic.js'
@@ -52,6 +51,28 @@ export default () => {
       }
     })
 
+    canvas.addEventListener('mousedown', (e) => {
+      console.log("Mouseddown", e)
+      const mouseX = (e.clientX / window.innerWidth) * 2 - 1
+      const mouseY = -(e.clientY / window.innerHeight) * 2 + 1
+      const mouseZ = 0.5
+      console.log('mouseX, mouseY, mouseZ :>> ', mouseX, mouseY, mouseZ);
+      const mouse3D = new THREE.Vector3(mouseX, mouseY, mouseZ)
+      const raycaster = new THREE.Raycaster()
+      // projector
+      raycaster.setFromCamera(mouse3D, camera)
+
+      // const pieces = gameObjectManager.findAllGameObjectsByName('Piece')
+      const intersects = raycaster.intersectObjects(scene.children)
+      console.log('intersects :>> ', intersects)
+      console.log('scene :>> ', scene.children)
+      // console.log('pieces :>> ', pieces)
+      // console.log('raycaster :>> ', raycaster)
+      // var raycaster = projector.pickingRay(mouse3D.clone(), camera)
+      // var intersects = raycaster.intersectObjects(objects)
+    })
+
+
     const movePiece = (piece, grid, row, column) => {
       const newPos = grid.getCenterOfTile(row, column)
       piece.transform.position.x = newPos.x
@@ -90,8 +111,6 @@ export default () => {
   })
 }
 
-
-
 function setUp() {
   // Clock
   const clock = new THREE.Clock()
@@ -126,6 +145,7 @@ function setUp() {
 
   // GameObjectManager
   const gameObjectManager = new GameObjectManager()
+
   return { clock, scene, camera, canvas, renderer, keyboardInputManager, gameObjectManager }
 }
 // window.onresize = () => { resizeScreen(renderer) }

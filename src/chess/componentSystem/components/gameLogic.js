@@ -18,17 +18,6 @@ export default class GameLogic extends Component {
     super(gameObject)
     const props = Object.assign(defaultProps, config)
     this.board = new Board()
-    console.log('board in GameLogic :>> ', this.board)
-    this.board.addPiece('Knight', 0, 5)
-    this.board.addPiece('Knight', 0, 3)
-    console.log('this.board :>> ', this.board);
-    // this.populateGrid(gameObject, this.board, props.grid, props.models)
-
-    // const pieces = gameObject.getComponentsByType(Piece)
-    // // console.log('gameObject :>> ', gameObject);
-    // console.log('pieces :>> ', pieces);
-    // this.movePiece(pieces[0], props.grid, 1, 1)
-    // this.movePiece(pieces[1], props.grid, 2, 2)
   }
 
   populateGrid = () => {

@@ -1,24 +1,27 @@
 import GameObject from './gameObject.js'
-import SafeArray from './safeArray.js';
+import SafeArray from './safeArray.js'
 
 export default class GameObjectManager {
   constructor() {
-    this.gameObjects = new SafeArray();
+    this.gameObjects = new SafeArray()
   }
   createGameObject(parent, name) {
-    const gameObject = new GameObject(parent, name);
-    this.gameObjects.add(gameObject);
-    return gameObject;
+    const gameObject = new GameObject(parent, name)
+    this.gameObjects.add(gameObject)
+    return gameObject
   }
   removeGameObject(gameObject) {
-    this.gameObjects.remove(gameObject);
+    this.gameObjects.remove(gameObject)
   }
   findGameObjectByName(name) {
     const gameObjects = this.gameObjects.find(gameObject => gameObject.name === name)
     if (gameObjects.length > 0) return gameObjects[0]
     else return null
   }
+  findAllGameObjectsByName(name) {
+    return this.gameObjects.find(gameObject => gameObject.name === name)
+  }
   update(delta) {
-    this.gameObjects.forEach(gameObject => gameObject.update(delta));
+    this.gameObjects.forEach(gameObject => gameObject.update(delta))
   }
 }
