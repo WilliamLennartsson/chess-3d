@@ -1,4 +1,5 @@
 import tilesetImg from '../assets/tileset.png'
+import { Pos, Offset, Piece, Tile, Player, Board, Game, Side, PieceTypes } from './types'
 
 const rows = 8
 const cols = 8
@@ -18,66 +19,6 @@ const loadAssets = (callback: (tileset: HTMLImageElement) => void) => {
     callback(img)
   }, false);
   img.src = tilesetImg
-}
-
-interface Pos {
-  x: number,
-  y: number
-}
-interface Offset {
-  x: number,
-  y: number
-}
-
-enum PieceTypes {
-  rook = 'rook',
-  knight = 'knight',
-  bishop = 'bishop',
-  queen = 'queen',
-  king = 'king',
-  pawn = 'pawn'
-}
-
-type Side = 'WHITE' | 'BLACK'
-
-interface Piece {
-  x: number,
-  y: number,
-  type: PieceTypes,
-  side: Side,
-}
-
-export interface Tile {
-  x: number,
-  y: number,
-  piece: Piece | null,
-  highlighted: boolean,
-}
-
-export interface Player {
-  name: string,
-  side: Side
-}
-
-export interface Board {
-  tiles: Tile[][],
-  selectedTile: Tile,
-  players: Player[],
-  rows: number,
-  cols: number,
-  width: number,
-  height: number,
-  tileWidth: number,
-  tileHeight: number,
-  forTile: (callback: (tile: Tile) => void) => void
-}
-
-export interface Game {
-  board: Board,
-  render: (ctx: CanvasRenderingContext2D) => void,
-  handleMouseMove: (x: number, y: number) => void,
-  handleMouseDown: (x: number, y: number) => void,
-  handleMouseUp: (x: number, y: number) => void
 }
 
 export const initGame = (width: number, height: number, onComplete: (game: Game) => void) => {
@@ -235,6 +176,7 @@ export const createBoard = (width: number, height: number): Board => {
 }
 
 const getLegalMoves = (tile: Tile, board: Board, moves: Pos[]): Pos[] => {
+  // TODO: 
   return moves
 }
 
