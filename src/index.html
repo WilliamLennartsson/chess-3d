@@ -4,9 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess</title>
+  <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
-  <script src="index.js"></script>
+  <header class="header">
+    <h1>Hej</h1>
+    <ul class="header_menu">
+      <button id="menuBtn1" class="header_menu_item">Chess</button>
+      <button id="menuBtn2" class="header_menu_item">Chess</button>
+    </ul>
+  </header>
   <canvas id="3DScreen" tabindex="1"></canvas>
   <div id="loading">
         <div>
@@ -15,5 +22,6 @@
         </div>
       </div>
   <div style="width: 400px; height: 400px;" id="chessCanvas"></div>
+  <script src="index.js"></script>
 </body>
 </html>
