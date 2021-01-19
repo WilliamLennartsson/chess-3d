@@ -1,14 +1,30 @@
+import tilesetImg from '../assets/tileset.png'
+
 const rows = 8
 const cols = 8
 
 const BG_COLOR = '#336633'
+
+const COLOR_TILE_BORDER = '#000000'
 const COLOR_WHITE = '#669933'
 const COLOR_BLACK = '#113366'
 const COLOR_WHITE_PIECES = '#222244'
 const COLOR_BLACK_PIECES = '#993388'
-const COLOR_HIGHLIGHTED_TILE = '#117711'
+const COLOR_HIGHLIGHTED_TILE = '#ff0581'
+
+const loadAssets = (callback: (tileset: HTMLImageElement) => void) => {
+  const img = new Image();
+  img.addEventListener('load', function () {
+    callback(img)
+  }, false);
+  img.src = tilesetImg
+}
 
 interface Pos {
+  x: number,
+  y: number
+}
+interface Offset {
   x: number,
   y: number
 }
@@ -64,105 +80,110 @@ export interface Game {
   handleMouseUp: (x: number, y: number) => void
 }
 
-export const initGame = (width: number, height: number): Game => {
-  const board: Board = createBoard(width, height)
+export const initGame = (width: number, height: number, onComplete: (game: Game) => void) => {
+  loadAssets(tileset => {
+    const board: Board = createBoard(width, height)
 
-  // Rendering
-  const render = (ctx) => {
-    clearScreen(ctx)
-    renderBoard(ctx)
-    renderPieces(ctx)
-  }
-  const clearScreen = (ctx) => {
-    ctx.fillStyle = BG_COLOR
-    ctx.fillRect(0, 0, width, height)
-  }
-  const renderBoard = (ctx: CanvasRenderingContext2D) => {
-    board.forTile((tile) => {
-      const { x, y } = tile
+    // Rendering
+    const render = (ctx) => {
+      clearScreen(ctx)
+      renderBoard(ctx)
+      renderPieces(ctx)
+    }
+    const clearScreen = (ctx) => {
+      ctx.fillStyle = BG_COLOR
+      ctx.fillRect(0, 0, width, height)
+    }
+    const renderBoard = (ctx: CanvasRenderingContext2D) => {
+      board.forTile((tile) => {
+        const { x, y } = tile
+        const { tileWidth, tileHeight } = board
+        if (tile.highlighted) ctx.fillStyle = COLOR_HIGHLIGHTED_TILE
+        else ctx.fillStyle = (x + y) % 2 == 0 ? COLOR_WHITE : COLOR_BLACK
+        ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight)
+        ctx.fillStyle = COLOR_TILE_BORDER
+        ctx.strokeRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight)
+      })
+    }
+    const renderPieces = (ctx: CanvasRenderingContext2D) => {
+      const spriteWidth = tileset.width / 6
+      const spriteHeight = tileset.height / 2
       const { tileWidth, tileHeight } = board
-      // console.log(tile.highlighted)
-      if (tile.highlighted) ctx.fillStyle = COLOR_HIGHLIGHTED_TILE
-      else ctx.fillStyle = (x + y) % 2 == 0 ? COLOR_WHITE : COLOR_BLACK
-      ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight)
-    })
-  }
-  const renderPieces = (ctx: CanvasRenderingContext2D) => {
-    board.forTile((tile) => {
-      if (isTileEmpty(tile)) {
-        const x = (tile.x * board.tileWidth) + (board.tileWidth * 0.5)
-        const y = (tile.y * board.tileHeight) + (board.tileWidth * 0.5)
-        const color = getPieceColor(tile.piece)
-        ctx.beginPath()
-        ctx.moveTo(x, y)
-        ctx.arc(x, y, 20, 0, Math.PI * 2)
-        ctx.fillStyle = color
-        ctx.fill()
+      board.forTile((tile) => {
+        if (isTileEmpty(tile)) {
+          const { side, type } = tile.piece
+          const x = (tile.x * board.tileWidth)
+          const y = (tile.y * board.tileHeight)
+          const offset = getTileOffset(type, side, spriteWidth, spriteHeight)
+          const offsetX = offset.x
+          const offsetY = offset.y
+          ctx.drawImage(tileset, offsetX, offsetY, spriteWidth, spriteHeight, x, y, tileWidth, tileHeight)
+        }
+      })
+    }
+
+    // Utils
+    const clearBoardHighlights = () => board.forTile(tile => tile.highlighted = false)
+    const isTileEmpty = (tile: Tile) => tile.piece
+    const getPieceColor = (piece: Piece) => piece.side === 'WHITE' ? COLOR_WHITE_PIECES : COLOR_BLACK_PIECES
+    const getTilePos = (x: number, y: number): Pos => {
+      return {
+        x: Math.floor(x / board.tileWidth),
+        y: Math.floor(y / board.tileHeight),
       }
-    })
-  }
-
-  // Utils
-  const clearBoardHighlights = () => board.forTile(tile => tile.highlighted = false)
-  const isTileEmpty = (tile: Tile) => tile.piece
-  const getPieceColor = (piece: Piece) => piece.side === 'WHITE' ? COLOR_WHITE_PIECES : COLOR_BLACK_PIECES
-  const getTilePos = (x: number, y: number): Pos => {
-    return {
-      x: Math.floor(x / board.tileWidth),
-      y: Math.floor(y / board.tileHeight),
     }
-  }
-  const getTile = (pos: Pos): Tile => board.tiles[pos.y][pos.x]
-  const isPosWithinBounds = (pos: Pos) => (pos.x >= 0 && pos.x < board.tiles.length) && (pos.y >= 0 && pos.y < board.tiles[pos.x].length)
-  const isSameTile = (tile1: Tile, tile2: Tile) => (tile1.x === tile2.x && tile1.y === tile2.y)
+    const getTile = (pos: Pos): Tile => board.tiles[pos.y][pos.x]
+    const isPosWithinBounds = (pos: Pos) => (pos.x >= 0 && pos.x < board.tiles.length) && (pos.y >= 0 && pos.y < board.tiles[pos.x].length)
+    const isSameTile = (tile1: Tile, tile2: Tile) => (tile1.x === tile2.x && tile1.y === tile2.y)
 
-  const movePiece = (from: Tile, to: Tile) => {
-    //TODO: Add so that only the correct player can move the piece
-    to.piece = from.piece
-    from.piece = null
-  }
-
-  // Input handlers
-  const handleMouseMove = (x: number, y: number) => { }
-  const handleMouseDown = (x: number, y: number) => {
-    const tilePos = getTilePos(x, y)
-    const withinBounds = isPosWithinBounds(tilePos)
-    if (withinBounds) {
-      const tile = getTile(tilePos)
-      console.log('tile', tile)
-      const moves = getMoves(tile, board).filter(move => isPosWithinBounds(move))
-      const legalMoves = getLegalMoves(tile, board, moves)
-      // Only for testing
-      const highlightTiles = legalMoves.map(move => getTile(move))
-      highlightTiles.forEach(tile => tile.highlighted = true)
-      board.selectedTile = tile
-      tile.highlighted = true
+    const movePiece = (from: Tile, to: Tile) => {
+      //TODO: Add so that only the correct player can move the piece
+      to.piece = from.piece
+      from.piece = null
     }
-  }
 
-  const handleMouseUp = (x: number, y: number) => {
-    const tilePos = getTilePos(x, y)
-    const withinBounds = isPosWithinBounds(tilePos)
-    if (withinBounds) {
-      const from = board.selectedTile
-      const to = getTile(tilePos)
-      const fromTileEmpty = isTileEmpty(from)
-      if (!isSameTile(from, to) && fromTileEmpty) {
-        movePiece(from, to)
+    // Input handlers
+    const handleMouseMove = (x: number, y: number) => { }
+    const handleMouseDown = (x: number, y: number) => {
+      const tilePos = getTilePos(x, y)
+      const withinBounds = isPosWithinBounds(tilePos)
+      if (withinBounds) {
+        const tile = getTile(tilePos)
+        console.log('tile', tile)
+        const moves = getMoves(tile, board).filter(move => isPosWithinBounds(move))
+        const legalMoves = getLegalMoves(tile, board, moves)
+        // Only for testing
+        const highlightTiles = legalMoves.map(move => getTile(move))
+        highlightTiles.forEach(tile => tile.highlighted = true)
+        board.selectedTile = tile
+        tile.highlighted = true
       }
-      board.selectedTile.highlighted = false
-      board.selectedTile = null
     }
-    clearBoardHighlights()
-  }
 
-  return {
-    board,
-    render,
-    handleMouseMove,
-    handleMouseDown,
-    handleMouseUp,
-  }
+    const handleMouseUp = (x: number, y: number) => {
+      const tilePos = getTilePos(x, y)
+      const withinBounds = isPosWithinBounds(tilePos)
+      if (withinBounds) {
+        const from = board.selectedTile
+        const to = getTile(tilePos)
+        const fromTileEmpty = isTileEmpty(from)
+        if (!isSameTile(from, to) && fromTileEmpty) {
+          movePiece(from, to)
+        }
+        board.selectedTile.highlighted = false
+        board.selectedTile = null
+      }
+      clearBoardHighlights()
+    }
+
+    onComplete({
+      board,
+      render,
+      handleMouseMove,
+      handleMouseDown,
+      handleMouseUp,
+    })
+  })
 }
 
 export const createBoard = (width: number, height: number): Board => {
@@ -292,4 +313,19 @@ const getMovesForPiece = (type: PieceTypes, side: Side, x: number, y: number): P
       break
   }
   return moves
+}
+
+// TILES
+// TODO: Sprite interface. All pieces should hold a ref to how to draw the correct sprite
+const tilesetLayout = [PieceTypes.king, PieceTypes.queen, PieceTypes.rook, PieceTypes.knight, PieceTypes.bishop, PieceTypes.pawn]
+const getTileOffset = (type: PieceTypes, side: Side, spriteWidth: number, spriteHeight: number): Offset => {
+  const spriteIndex = tilesetLayout.indexOf(type)
+  if (spriteIndex > -1) {
+    return {
+      x: spriteIndex * spriteWidth,
+      y: side === 'BLACK' ? 0 : spriteHeight
+    }
+  } else {
+    return { x: 0, y: 0 }
+  }
 }

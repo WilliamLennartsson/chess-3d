@@ -6,11 +6,12 @@ const HEIGHT: number = parseInt(canvas.getAttribute('height'))
 
 
 window.onload = () => {
-  const game: Game = initGame(WIDTH, HEIGHT)
-  canvas.onmousedown = (e) => game.handleMouseDown(e.clientX, e.clientY)
-  canvas.onmouseup = (e) => game.handleMouseUp(e.clientX, e.clientY)
-  canvas.onmousemove = (e) => game.handleMouseMove(e.clientX, e.clientY)
-  setInterval(() => {
-    game.render(ctx)
-  }, 100)
+  initGame(WIDTH, HEIGHT, (game: Game) => {
+    canvas.onmousedown = (e) => game.handleMouseDown(e.clientX, e.clientY)
+    canvas.onmouseup = (e) => game.handleMouseUp(e.clientX, e.clientY)
+    canvas.onmousemove = (e) => game.handleMouseMove(e.clientX, e.clientY)
+    setInterval(() => {
+      game.render(ctx)
+    }, 100)
+  })
 }
