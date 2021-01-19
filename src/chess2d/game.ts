@@ -1,4 +1,5 @@
-import board from "../chess/board"
+const rows = 8
+const cols = 8
 
 const BG_COLOR = '#336633'
 const COLOR_WHITE = '#669933'
@@ -33,7 +34,7 @@ interface Piece {
 export interface Tile {
   x: number,
   y: number,
-  piece: Piece,
+  piece: Piece | null,
   highlighted: boolean,
 }
 
@@ -103,7 +104,7 @@ export const initGame = (width: number, height: number): Game => {
 
   // Utils
   const clearBoardHighlights = () => board.forTile(tile => tile.highlighted = false)
-  const isTileEmpty = (tile: Tile) => tile.piece?.type
+  const isTileEmpty = (tile: Tile) => tile.piece
   const getPieceColor = (piece: Piece) => piece.side === 'WHITE' ? COLOR_WHITE_PIECES : COLOR_BLACK_PIECES
   const getTilePos = (x: number, y: number): Pos => {
     return {
@@ -111,9 +112,9 @@ export const initGame = (width: number, height: number): Game => {
       y: Math.floor(y / board.tileHeight),
     }
   }
-  const getTile = (pos: Pos) => board.tiles[pos.y][pos.x]
+  const getTile = (pos: Pos): Tile => board.tiles[pos.y][pos.x]
   const isPosWithinBounds = (pos: Pos) => (pos.x >= 0 && pos.x < board.tiles.length) && (pos.y >= 0 && pos.y < board.tiles[pos.x].length)
-  const isSameTile = (tile1: Tile, tile2: Tile) => tile1.x === tile2.x && tile1.y === tile2.y
+  const isSameTile = (tile1: Tile, tile2: Tile) => (tile1.x === tile2.x && tile1.y === tile2.y)
 
   const movePiece = (from: Tile, to: Tile) => {
     //TODO: Add so that only the correct player can move the piece
@@ -128,16 +129,14 @@ export const initGame = (width: number, height: number): Game => {
     const withinBounds = isPosWithinBounds(tilePos)
     if (withinBounds) {
       const tile = getTile(tilePos)
-      const moves = getMoves(tile, board)
-
+      console.log('tile', tile)
+      const moves = getMoves(tile, board).filter(move => isPosWithinBounds(move))
+      const legalMoves = getLegalMoves(tile, board, moves)
       // Only for testing
-      const highlightTiles = moves.map(move => getTile(move))
+      const highlightTiles = legalMoves.map(move => getTile(move))
       highlightTiles.forEach(tile => tile.highlighted = true)
-      // ----_------- HÄR SLUTADE JAG kl 04.20..
       board.selectedTile = tile
       tile.highlighted = true
-      // TODO: legalMoves rename to getMoves. legalMoves filters which of all possible moves are legal
-      // const moves = getMoves(tile) 
     }
   }
 
@@ -147,7 +146,10 @@ export const initGame = (width: number, height: number): Game => {
     if (withinBounds) {
       const from = board.selectedTile
       const to = getTile(tilePos)
-      if (!isSameTile(from, to)) movePiece(from, to)
+      const fromTileEmpty = isTileEmpty(from)
+      if (!isSameTile(from, to) && fromTileEmpty) {
+        movePiece(from, to)
+      }
       board.selectedTile.highlighted = false
       board.selectedTile = null
     }
@@ -175,11 +177,8 @@ export const createBoard = (width: number, height: number): Board => {
     PieceTypes.rook
   ]
 
-  const size = 8
-  const tileWidth = width / size
-  const tileHeight = height / size
-  const rows = 8
-  const cols = 8
+  const tileWidth = width / rows
+  const tileHeight = height / cols
   const tiles: Tile[][] = []
   const players = []
 
@@ -190,7 +189,7 @@ export const createBoard = (width: number, height: number): Board => {
       const piece = { x, y, type: null, side }
       if (y == 0 || y == 7) piece.type = backRank[x]
       if (y == 1 || y == 6) piece.type = PieceTypes.pawn
-      const tile = { x, y, piece: piece, highlighted: false }
+      const tile = { x, y, piece: piece.type ? piece : null, highlighted: false }
       tiles[y].push(tile)
     }
   }
@@ -214,45 +213,83 @@ export const createBoard = (width: number, height: number): Board => {
   }
 }
 
+const getLegalMoves = (tile: Tile, board: Board, moves: Pos[]): Pos[] => {
+  return moves
+}
+
 const getMoves = (tile: Tile, board: Board): Pos[] => {
   // TODO
   const piece = tile.piece
-  if (!piece) return
+  if (!piece) return []
+  let moves = []
 
-  const legalMoves = []
   const pos = { x: tile.x, y: tile.y }
+  moves = getMovesForPiece(piece.type, piece.side, pos.x, pos.y)
 
-  switch (piece.type) {
+  return moves
+}
+
+const getMovesForPiece = (type: PieceTypes, side: Side, x: number, y: number): Pos[] => {
+  const moves = []
+  switch (type) {
     case PieceTypes.pawn:
-      const dir = piece.side === 'WHITE' ? 1 : -1
-      return [
-        // Move up 1 § 2
-        { x: pos.x, y: pos.y + dir },
-        { x: pos.x, y: pos.y + (2 * dir) },
-        // Capture left / right
-        { x: pos.x + 1, y: pos.y + dir },
-        { x: pos.x - 1, y: pos.y + dir },
-      ]
-      // Move one up / down
-      // Move two up / down
-      // Capture upRight, upLeft / downRight, downLeft
-      // Capture a passant
-      // Promote
+      const dir = side === 'WHITE' ? 1 : -1
+      // Move up 1 § 2
+      moves.push({ x: x, y: y + dir })
+      moves.push({ x: x, y: y + (2 * dir) })
+      // Capture left / right
+      moves.push({ x: x + 1, y: y + dir })
+      moves.push({ x: x - 1, y: y + dir })
       break;
     case PieceTypes.rook:
-      for (let i = 0; i < board.rows; i++) { }
-      return [
-
-      ]
+      for (let i = 0; i < rows; i++) {
+        moves.push({ x: x, y: i })
+        moves.push({ x: i, y: y })
+      }
       break;
     case PieceTypes.knight:
-      break;
+      const posX = x
+      const posY = y
+      const xArr: number[] = [2, 1, - 1, -2, -2, -1, 1, 2]
+      const yArr: number[] = [1, 2, 2, 1, - 1, -2, -2, -1]
+      for (let i = 0; i < 8; i++) {
+        const x = posX + xArr[i]
+        const y = posY + yArr[i]
+        moves.push({ x, y })
+      }
+      break
     case PieceTypes.bishop:
-      break;
+      const bishopX = x
+      const bishopY = y
+      const maxIterations = Math.max(7 - bishopX, 7 - bishopY, bishopX, bishopY);
+      // const boardSize = board.tiles.length
+      for (let iteration = 0; iteration <= maxIterations; iteration++) {
+        if (bishopX + iteration <= rows) {
+          if (bishopY + iteration <= cols) moves.push({ x: bishopX + iteration, y: bishopY + iteration }) // Up right
+          if (bishopY - iteration >= 0) moves.push({ x: bishopX + iteration, y: bishopY - iteration }) // Down right
+        }
+        if (bishopX - iteration >= 0) {
+          if (bishopY - iteration >= 0) moves.push({ x: bishopX - iteration, y: bishopY - iteration }) // Up left
+          if (bishopY + iteration <= cols) moves.push({ x: bishopX - iteration, y: bishopY + iteration }) // Down left 
+        }
+      }
+      break
     case PieceTypes.queen:
-      break;
+      moves.push(...getMovesForPiece(PieceTypes.rook, side, x, y))
+      moves.push(...getMovesForPiece(PieceTypes.bishop, side, x, y))
+      break
     case PieceTypes.king:
-      break;
+      moves.push(
+        { x: x + 1, y: y },
+        { x: x - 1, y: y },
+        { x: x, y: y + 1 },
+        { x: x, y: y - 1 },
+        { x: x + 1, y: y + 1 },
+        { x: x - 1, y: y + 1 },
+        { x: x + 1, y: y - 1 },
+        { x: x - 1, y: y - 1 },
+      )
+      break
   }
-  return []
+  return moves
 }
