@@ -1,4 +1,5 @@
-import { Game, initGame } from './game'
+import { initGame } from './game'
+import { Game } from './types'
 const canvas: HTMLCanvasElement = document.querySelector('#gameScreen')
 const ctx = canvas.getContext('2d')
 const WIDTH: number = parseInt(canvas.getAttribute('width'))
@@ -15,3 +16,13 @@ window.onload = () => {
     }, 100)
   })
 }
+
+/**
+ * TODO
+ * tileNames. e4, f8 etc..
+ * Legal moves
+ * Check / chackmate
+ * Clock
+ * Take turns
+ * Move history
+ */
